@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { ArrowLeft, Save, Eye, Lightbulb } from 'lucide-react';
 
 const CreateArticlePage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    excerpt: '',
+    description: '',
     category: '',
-    imageUrl: '',
+    imageurl: '',
     content: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
 
   const categories = [
     'Sports',
@@ -39,9 +45,49 @@ const CreateArticlePage = () => {
     }));
   };
 
-  const handlePublish = () => {
+  const handlePublish = async (e) => {
+    e?.preventDefault();
     console.log('Publishing article:', formData);
-    alert('Article published successfully!');
+
+  const { title, description, content, category, imageurl } = formData;
+
+    // Validation
+    if (!title  || !description || !content || !category || !imageurl) {
+      setMessage('Please fill all required fields (title, description, content, category, image)');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    // Shape payload and send JSON to server's /api/articles
+    try {
+      const payload = {
+        title,
+        description,
+        author: formData.author || 'Anonymous',
+        date: new Date().toISOString().split('T')[0],
+        readtime: Math.max(1, Math.round((formData.content || '').split('\n').length / 50)) + ' min read',
+        tag: formData.category || '',
+        imageurl: formData.imageurl || '',
+        content: formData.content || '',
+        category: formData.category || ''
+      };
+
+      await axios.post('http://localhost:5000/api/articles', payload);
+
+      setMessage('Article created successfully!');
+
+      // Redirect to blog after short delay
+      setTimeout(() => {
+        navigate('/blog');
+      }, 1200);
+    } catch (error) {
+      console.error('Error creating article:', error);
+      setMessage('Error creating article. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePreview = () => {
@@ -49,7 +95,7 @@ const CreateArticlePage = () => {
     alert('Opening preview...');
   };
 
-  const characterCount = formData.excerpt.length;
+  const characterCount = formData.description.length;
   const maxCharacters = 160;
 
   return (
@@ -81,7 +127,22 @@ const CreateArticlePage = () => {
           {/* Form Fields */}
           <div className="space-y-6">
             
-            {/* Article Title */}
+            {/* Arthour */}
+              <div>
+              <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
+                Author
+              </label>
+              <input
+                type="text"
+                id="author"
+                name="author"
+                value={formData.author}
+                onChange={handleChange}
+                placeholder="Enter a compelling title..."
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+
             <div>
               <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
                 Article Title
@@ -97,15 +158,15 @@ const CreateArticlePage = () => {
               />
             </div>
 
-            {/* Excerpt */}
+            {/* Description */}
             <div>
-              <label htmlFor="excerpt" className="block text-sm font-semibold text-gray-900 mb-2">
-                Excerpt
+              <label htmlFor="description" className="block text-sm font-semibold text-gray-900 mb-2">
+                Description
               </label>
               <textarea
-                id="excerpt"
-                name="excerpt"
-                value={formData.excerpt}
+                id="description"
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
                 rows={3}
                 maxLength={maxCharacters}
@@ -147,9 +208,9 @@ const CreateArticlePage = () => {
               </label>
               <input
                 type="url"
-                id="imageUrl"
-                name="imageUrl"
-                value={formData.imageUrl}
+                id="imageurl"
+                name="imageurl"
+                value={formData.imageurl}
                 onChange={handleChange}
                 placeholder="https://example.com/image.jpg"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -192,6 +253,14 @@ const CreateArticlePage = () => {
                 <span>Preview</span>
               </button>
             </div>
+
+            {/* Status */}
+            {message && (
+              <div className="mt-4 text-sm text-center text-gray-700">{message}</div>
+            )}
+            {loading && (
+              <div className="mt-2 text-sm text-center text-gray-500">Submitting...</div>
+            )}
 
           </div>
         </div>

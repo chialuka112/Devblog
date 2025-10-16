@@ -1,99 +1,43 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
+import axios from 'axios'
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User, Share2 } from 'lucide-react';
 
 const BlogPost = () => {
   const { id } = useParams();
-  
-  // All blog posts data - in a real app, import this from a shared data file
-  const allPosts = [
-    {
-      id: 1,
-      title: "Getting Started with React and TypeScript",
-      author: "Sarah Johnson",
-      date: "2025-10-01",
-      readTime: "5 min read",
-      category: "React",
-      image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&q=80",
-      content: `
-        <h2>Introduction</h2>
-        <p>React and TypeScript together provide a powerful combination for building robust, type-safe web applications. In this comprehensive guide, we'll explore how to set up a modern React project with TypeScript and follow best practices.</p>
-
-        <h2>Why TypeScript with React?</h2>
-        <p>TypeScript brings static typing to JavaScript, which helps catch errors early in the development process. When combined with React, you get:</p>
-        <ul>
-          <li>Better IDE support with intelligent code completion</li>
-          <li>Improved code maintainability and refactoring</li>
-          <li>Clear component props and state typing</li>
-          <li>Reduced runtime errors through compile-time checks</li>
-        </ul>
-
-        <h2>Setting Up Your Project</h2>
-        <p>The easiest way to start a React + TypeScript project is using Vite, which offers blazing fast hot module replacement and optimized builds.</p>
-        
-        <pre><code>npm create vite@latest my-app -- --template react-ts
-cd my-app
-npm install
-npm run dev</code></pre>
-
-        <h2>Component Best Practices</h2>
-        <p>When creating React components with TypeScript, always define proper interfaces for your props:</p>
-        
-        <pre><code>interface ButtonProps {
-  label: string;
-  onClick: () => void;
-  variant?: 'primary' | 'secondary';
-}
-
-const Button: React.FC<ButtonProps> = ({ label, onClick, variant = 'primary' }) => {
-  return (
-    <button onClick={onClick} className={\`btn btn-\${variant}\`}>
-      {label}
-    </button>
-  );
-};</code></pre>
-
-        <h2>State Management</h2>
-        <p>TypeScript enhances useState hooks with proper type inference:</p>
-        
-        <pre><code>const [count, setCount] = useState<number>(0);
-const [user, setUser] = useState<User | null>(null);</code></pre>
-
-        <h2>Conclusion</h2>
-        <p>React and TypeScript together create a robust foundation for building scalable web applications. Start small, gradually adopt TypeScript features, and enjoy the benefits of type safety in your development workflow.</p>
-      `
-    },
-    {
-      id: 2,
-      title: "Understanding REST APIs and Backend Integration",
-      author: "Michael Chen",
-      date: "2025-09-28",
-      readTime: "8 min read",
-      category: "Backend",
-      image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&q=80",
-      content: ""
-    },
-    {
-    id: 5,
-      title: "Skinny Jeans and Statement Necklaces ",
-      author: "Michael Chen",
-      date: "2025-09-28",
-      readTime: "8 min read",
-      category: "Lifestyle",
-      image: "https://akns-images.eonline.com/eol_images/Entire_Site/20251014/18a714f9-04f2-47b1-983e-30241fe8c3e0_1760466230.jpg?fit=around%7C1024:759&output-quality=90&crop=1024:759;center,top",
-      
-      content: `To some, 2013 might feel like yesterday. However it's been over a decade and your favorite 2013 styles are practically considered vintage and are therefore stylish once more. We know, we can't believe it either!
-
-Think dark skinny jeans under knee-high taupe boots and black skater skirts and peter pan collar tops. Remember the infamous outfits consisting of tunic tops over jeggings and turquoise statement necklaces? They're all back!
-
-No, you don't have to wear an owl pendant necklace to make it work. It's not hard to bring the look of these iconic 2013 popular clothing pieces into the modern age, all with a 2025 twist, of course.
-
-Keep scrolling to shop our favorite picks that will have the 2013 version of you kicking their feet with excitment. Shop trendy and timeless pieces below from Everlane, Wrangler, Free People, Old Navy, Vera Bradley, and more.`
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+   useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`http://localhost:5000/api/articles/${id}`);
+        setPost(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching article:', err);
+        if (err.response && err.response.status === 404) {
+          setError('Article not found');
+        } else {
+          setError('Failed to load article');
+        }
+        setLoading(false);
       }
-  ];
+    };
 
-  // Find the post with matching ID
-  const post = allPosts.find(p => p.id === parseInt(id));
+    if (id) fetchArticle();
+  }, [id]);
+
+  // `post` is populated by the fetch above
+
+  if (loading) {
+    return <div className="loading">Loading articles...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
 
   // Handle if post not found
   if (!post) {
@@ -127,12 +71,13 @@ Keep scrolling to shop our favorite picks that will have the 2013 version of you
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Hero Image Section */}
       <div className="relative h-96 overflow-hidden">
         <img 
-          src={post.image} 
+          src={post.imageurl} 
           alt={post.title}
           className="w-full h-full object-cover"
         />

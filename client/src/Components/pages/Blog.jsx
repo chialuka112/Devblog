@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { useEffect } from 'react';
 import { Search, Calendar, Clock, User } from 'lucide-react';
 import Navbar from '../Layout/Navbar';
 import { Link } from 'react-router-dom';
@@ -8,8 +10,11 @@ import { Link } from 'react-router-dom';
 
  const Blog = () => {
       const [searchQuery, setSearchQuery] = useState('');
+const [articles, setFetchedArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+   const [error, setError] = useState('');
 
-  const articles = [
+ /* const articles = [
     {
       id: 1,
       title: "Getting Started with React and TypeScript",
@@ -60,7 +65,32 @@ import { Link } from 'react-router-dom';
       tag: "Lifestyle",
       image: "https://akns-images.eonline.com/eol_images/Entire_Site/20251014/18a714f9-04f2-47b1-983e-30241fe8c3e0_1760466230.jpg?fit=around%7C1024:759&output-quality=90&crop=1024:759;center,top",
     },
-  ];
+  ]; */
+
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/articles');
+      setFetchedArticles(response.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching articles:', err);
+      setError('Failed to load articles');
+      setLoading(false);
+    }
+  };
+    
+ if (loading) {
+    return <div className="loading">Loading products...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
 
     return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -112,7 +142,7 @@ import { Link } from 'react-router-dom';
             >
               <div className="relative h-48 overflow-hidden">
                 <img
-                  src={article.image}
+                  src={article.imageurl}
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
@@ -141,7 +171,7 @@ import { Link } from 'react-router-dom';
                     </div>
                     <div className="flex items-center space-x-2">
                       <Clock className="w-4 h-4" />
-                      <span>{article.readTime}</span>
+                      <span>{article.readtime}</span>
                     </div>
                   </div>
                 </div>
